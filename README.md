@@ -32,4 +32,19 @@ uvicorn app.main:app --reload
 
 http://localhost:8000/docs
 
+## 3.Instalación y ejecución Docker
+
+### 3.1 Construir la imagen Docker
+
+docker build -t pokeapi-fastapi .
+
+### 3.2 Ejecutar el contenedor
+docker run -d -p 8000:8000 pokeapi-fastapi
+
+### 3.3 Ir al navegador y abrir:
+http://localhost:8000/docs
+
+## 4.Probar API 
+
+
 
