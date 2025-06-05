@@ -1,4 +1,5 @@
 import httpx
+from httpx import HTTPStatusError, RequestError
 
 async def fetch_pokemon_info(pokemon_list: list[str]):
     results = []
@@ -8,8 +9,7 @@ async def fetch_pokemon_info(pokemon_list: list[str]):
             try:
                 # Paso 1: Info básica del Pokémon
                 poke_response = await client.get(f"https://pokeapi.co/api/v2/pokemon/{name.lower()}")
-                if poke_response.status_code != 200:
-                    raise ValueError("Pokémon no encontrado")
+                poke_response.raise_for_status()
                 poke_data = poke_response.json()
 
                 types = [t["type"]["name"] for t in poke_data["types"]]
@@ -19,11 +19,16 @@ async def fetch_pokemon_info(pokemon_list: list[str]):
 
                 # Paso 2: Obtener URL de la cadena evolutiva
                 species_response = await client.get(species_url)
+                species_response.raise_for_status()
                 evolution_chain_url = species_response.json()["evolution_chain"]["url"]
 
                 # Paso 3: Obtener la cadena evolutiva ordenada
                 chain_response = await client.get(evolution_chain_url)
+                chain_response.raise_for_status()
                 chain_data = chain_response.json()["chain"]
+
+                if "species" not in chain_data:
+                    raise KeyError("La estructura de evolución es inválida")
 
                 evolution_chain = []
                 current = chain_data
@@ -32,7 +37,6 @@ async def fetch_pokemon_info(pokemon_list: list[str]):
                     evolves = current.get("evolves_to")
                     current = evolves[0] if evolves else None
 
-                # Agregar al resultado
                 results.append({
                     "name": name.lower(),
                     "height": height,
@@ -41,10 +45,25 @@ async def fetch_pokemon_info(pokemon_list: list[str]):
                     "evolution_chain": evolution_chain
                 })
 
-            except Exception:
+            except HTTPStatusError as http_err:
                 results.append({
                     "name": name.lower(),
-                    "error": "Pokémon no encontrado"
+                    "error": f"Error HTTP: {http_err.response.status_code}"
+                })
+            except RequestError:
+                results.append({
+                    "name": name.lower(),
+                    "error": "Error de conexión con la PokeAPI"
+                })
+            except KeyError:
+                results.append({
+                    "name": name.lower(),
+                    "error": "Error al procesar datos de evolución"
+                })
+            except Exception as e:
+                results.append({
+                    "name": name.lower(),
+                    "error": f"Error inesperado: {str(e)}"
                 })
 
     return results
