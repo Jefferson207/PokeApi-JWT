@@ -46,5 +46,7 @@ http://localhost:8000/docs
 
 ## 4.Probar API 
 
+importar PokeAPI JWT.postman_collection.json en POSTMAN
+
 
 
