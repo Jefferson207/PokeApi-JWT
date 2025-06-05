@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from jose import jwt, JWTError
-from datetime import datetime
+from datetime import datetime, timezone
 from app.models import PokemonRequest
 from app.services import fetch_pokemon_info
 
@@ -15,7 +15,7 @@ async def verificar_token(credentials: HTTPAuthorizationCredentials = Depends(oa
     token = credentials.credentials
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        if datetime.fromtimestamp(payload["exp"]) < datetime.utcnow():
+        if datetime.fromtimestamp(payload["exp"], tz=timezone.utc) < datetime.now(timezone.utc):
             raise HTTPException(status_code=401, detail="Token expirado")
         return payload  
     except JWTError:

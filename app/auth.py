@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from jose import jwt
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 router = APIRouter()
 
@@ -19,7 +19,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends()):
     if form_data.username not in users_db or users_db[form_data.username] != form_data.password:
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
-    expire = datetime.utcnow() + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     payload = {
         "sub": form_data.username,
         "exp": int(expire.timestamp())
